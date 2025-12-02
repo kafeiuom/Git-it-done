@@ -1,14 +1,22 @@
+import os
 from pathlib import Path
+import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY
-SECRET_KEY = 'django-insecure-8_*(u-jb+#9y44g^7+nvzy2!so5=3uhpa^*7c%gm9_4gkk%-sj'
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+# ------------------------------------------------------------
+# SECURITY & DEBUG
+# ------------------------------------------------------------
+SECRET_KEY = os.environ.get("SECRET_KEY", "CHANGE_ME_BEFORE_DEPLOYMENT")
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-# Application definition
+ALLOWED_HOSTS = [
+    "*",   # Render automatically injects host
+]
+
+# ------------------------------------------------------------
+# INSTALLED APPS
+# ------------------------------------------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -16,6 +24,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Your apps
     'homepage',
     'menu',
     'reviews',
@@ -25,10 +35,21 @@ INSTALLED_APPS = [
     'cart',
     'favourites',
     'orders',
+
+    # Cloudinary image hosting
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
+# ------------------------------------------------------------
+# MIDDLEWARE
+# ------------------------------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+
+    # Static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -57,15 +78,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'KAFEI_project.wsgi.application'
 
-# Database
+# ------------------------------------------------------------
+# DATABASE — Render PostgreSQL
+# ------------------------------------------------------------
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),   # Render provides DATABASE_URL
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
-# Password validation
+# ------------------------------------------------------------
+# PASSWORD VALIDATION
+# ------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -73,31 +99,52 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
+# ------------------------------------------------------------
+# INTERNATIONALIZATION
+# ------------------------------------------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# ------------------------------------------------------------
+# STATIC FILES (WHITENOISE)
+# ------------------------------------------------------------
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    # add other apps if needed
-]
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Media files (for uploaded images)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_ROOT = BASE_DIR / "staticfiles"  # needed for collectstatic
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Default primary key field type
+# ------------------------------------------------------------
+# MEDIA / USER-UPLOADED FILES — CLOUDINARY
+# ------------------------------------------------------------
+MEDIA_URL = "/media/"
+
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME", "YOUR_CLOUD_NAME"),
+    "API_KEY": os.environ.get("CLOUDINARY_API_KEY", "YOUR_API_KEY"),
+    "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET", "YOUR_API_SECRET"),
+}
+
+# ------------------------------------------------------------
+# AUTH SETTINGS
+# ------------------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Login URLs
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:account_detail'
 LOGOUT_REDIRECT_URL = 'homepage:homepage'
 
-# Email Backend
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# ------------------------------------------------------------
+# EMAIL — for password reset
+# ------------------------------------------------------------
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
+EMAIL_HOST = "smtp.gmail.com"               # change if using another provider
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "YOUR_EMAIL")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "YOUR_PASSWORD")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
