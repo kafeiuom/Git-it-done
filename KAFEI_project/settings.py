@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ------------------------------------------------------------
 # SECURITY & DEBUG
 # ------------------------------------------------------------
-SECRET_KEY = os.environ.get("SECRET_KEY", "CHANGE_ME_BEFORE_DEPLOYMENT")
+SECRET_KEY = os.environ.get("SECRET_KEY", "vTiUP0w2w-mo4-nlAUlUKaxsAXhwOgSGi4Z5wUFAXTpvT-_u07oxXDRmjI9OQTNKbCg")
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = [
